@@ -1,0 +1,133 @@
+{
+  "model": "Multinomial Naive Bayes, author-written French synthetic logistics examples",
+  "trainingExamples": 48,
+  "testExamples": 20,
+  "correct": 14,
+  "abstentions": 6,
+  "incorrectNonAbstained": 0,
+  "overallAccuracy": 0.7,
+  "coverage": 0.7,
+  "limitations": "Small synthetic test set, same authors as training data, not an independent or field evaluation. No local-language, speech, medical, usability or impact validation. No claim of calibrated confidence.",
+  "rows": [
+    {
+      "text": "Je cherche un taxi pour aller au dispensaire",
+      "expected": "transport",
+      "predicted": "transport",
+      "source": "naive-bayes"
+    },
+    {
+      "text": "La route est difficile depuis mon village",
+      "expected": "transport",
+      "predicted": "transport",
+      "source": "naive-bayes"
+    },
+    {
+      "text": "Il me faut un véhicule pour le trajet",
+      "expected": "transport",
+      "predicted": "transport",
+      "source": "naive-bayes"
+    },
+    {
+      "text": "Je suis loin du centre sans moyen de déplacement",
+      "expected": "transport",
+      "predicted": "transport",
+      "source": "naive-bayes"
+    },
+    {
+      "text": "Je voudrais une moto pour venir à la visite",
+      "expected": "transport",
+      "predicted": "transport",
+      "source": "naive-bayes"
+    },
+    {
+      "text": "Je ne peux régler les frais des analyses",
+      "expected": "cost",
+      "predicted": "cost",
+      "source": "naive-bayes"
+    },
+    {
+      "text": "Quel est le prix des examens médicaux",
+      "expected": "cost",
+      "predicted": "cost",
+      "source": "naive-bayes"
+    },
+    {
+      "text": "Mon budget est insuffisant pour payer",
+      "expected": "cost",
+      "predicted": "cost",
+      "source": "naive-bayes"
+    },
+    {
+      "text": "Wezou peut-il couvrir mes dépenses de soins",
+      "expected": "cost",
+      "predicted": "cost",
+      "source": "naive-bayes"
+    },
+    {
+      "text": "Je cherche un financement pour la facture",
+      "expected": "cost",
+      "predicted": "human",
+      "source": "abstention"
+    },
+    {
+      "text": "Je vends au marché à cette heure",
+      "expected": "time",
+      "predicted": "time",
+      "source": "naive-bayes"
+    },
+    {
+      "text": "Peut-on changer le créneau de ma visite",
+      "expected": "time",
+      "predicted": "human",
+      "source": "abstention"
+    },
+    {
+      "text": "Je suis aux champs toute la matinée",
+      "expected": "time",
+      "predicted": "time",
+      "source": "naive-bayes"
+    },
+    {
+      "text": "Je souhaite reporter à un autre jour après mon travail",
+      "expected": "time",
+      "predicted": "time",
+      "source": "naive-bayes"
+    },
+    {
+      "text": "Mon activité ne me laisse pas le temps de venir",
+      "expected": "time",
+      "predicted": "human",
+      "source": "abstention"
+    },
+    {
+      "text": "Quels papiers dois-je apporter",
+      "expected": "understanding",
+      "predicted": "understanding",
+      "source": "naive-bayes"
+    },
+    {
+      "text": "Je voudrais comprendre les formalités",
+      "expected": "understanding",
+      "predicted": "human",
+      "source": "abstention"
+    },
+    {
+      "text": "Répétez les instructions dans ma langue",
+      "expected": "understanding",
+      "predicted": "human",
+      "source": "abstention"
+    },
+    {
+      "text": "Je ne comprends pas les documents écrits",
+      "expected": "understanding",
+      "predicted": "human",
+      "source": "abstention"
+    },
+    {
+      "text": "Expliquez-moi où me présenter et quoi préparer",
+      "expected": "understanding",
+      "predicted": "understanding",
+      "source": "naive-bayes"
+    }
+  ]
+}
