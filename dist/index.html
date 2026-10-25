@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#174f46">
+  <meta name="description" content="Relais Maman : prototype de coordination des soins mère-enfant au Togo. Démonstration sur données fictives.">
+  <title>Relais Maman — Chaque soin compte.</title>
+  <link rel="icon" type="image/svg+xml" href="./icon.svg">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./app.mjs"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Aller au contenu</a>
+  <div class="demo-bar"><span class="demo-dot"></span> PROTOTYPE DE RECHERCHE <span class="bar-sep">/</span> Données fictives · Aucun message envoyé à un soignant</div>
+  <header class="site-header">
+    <a class="brand" href="#maman" aria-label="Relais Maman, accueil"><img src="./icon.svg" alt="" width="40" height="40"><span>relais<span class="brand-light">maman</span><small>CHAQUE SOIN COMPTE.</small></span></a>
+    <nav class="top-nav" aria-label="Espaces de démonstration">
+      <a href="#maman" data-nav="maman">Espace maman</a>
+      <a href="#agent" data-nav="agent">Suivi communautaire <span id="nav-count" class="count">2</span></a>
+      <a href="#preuves" data-nav="preuves">Le prototype</a>
+    </nav>
+    <div class="header-meta"><span id="connection" class="connection">Mode local</span><span class="country">TG <span>Togo</span></span></div>
+  </header>
+  <main id="main" tabindex="-1"></main>
+  <footer class="site-footer"><span>Relais Maman <span class="footer-dot">·</span> Du premier message au soin reçu.</span><span>Version 0.1 <span class="footer-dot">·</span> Données conservées sur ce navigateur</span></footer>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <dialog id="case-dialog" aria-labelledby="dialog-title"></dialog>
+  <noscript><p>Activez JavaScript pour utiliser ce prototype. Aucun soin réel n’est organisé depuis cette page.</p></noscript>
+</body>
+</html>
