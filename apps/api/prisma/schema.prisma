@@ -1,0 +1,658 @@
+// Relais Maman — schéma de données v0.2. Données fictives uniquement en local et en démo.
+// Principes : identifiants UUID non prédictibles ; coordonnées séparées de l'identité ;
+// aucune donnée médicale au-delà du besoin de coordination ; historique jamais réécrit.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Référentiels : pays, zones, organisations, structures, langues ─────────
+
+model Country {
+  code      String @id // ISO 3166-1 alpha-2, ex. TG
+  name      String
+  timeZone  String // ex. Africa/Lome
+  currency  String // ISO 4217, ex. XOF (devise des frais de soins, pas du budget de candidature)
+  zones     Zone[]
+}
+
+model Zone {
+  id          String           @id @default(uuid()) @db.Uuid
+  name        String
+  countryCode String
+  country     Country          @relation(fields: [countryCode], references: [code])
+  isFictional Boolean          @default(true)
+  facilities  HealthFacility[]
+  teams       Team[]
+  beneficiaries Beneficiary[]
+}
+
+/// Organisation opératrice (ex. ADEC Consulting) regroupant des équipes d'agents.
+model Organization {
+  id    String @id @default(uuid()) @db.Uuid
+  name  String
+  teams Team[]
+}
+
+/// Équipe d'agents : un agent ne voit que les dossiers des bénéficiaires de son équipe.
+model Team {
+  id             String        @id @default(uuid()) @db.Uuid
+  name           String
+  organizationId String        @db.Uuid
+  organization   Organization  @relation(fields: [organizationId], references: [id])
+  zoneId         String        @db.Uuid
+  zone           Zone          @relation(fields: [zoneId], references: [id])
+  agents         Account[]     @relation("TeamAgents")
+  beneficiaries  Beneficiary[]
+  requests       Request[]
+}
+
+/// Structure de santé. `isFictional` : aucun partenariat réel n'est acquis.
+model HealthFacility {
+  id           String         @id @default(uuid()) @db.Uuid
+  name         String
+  zoneId       String         @db.Uuid
+  zone         Zone           @relation(fields: [zoneId], references: [id])
+  isFictional  Boolean        @default(true)
+  referents    Account[]      @relation("FacilityReferents")
+  appointments Appointment[]
+  slots        SlotProposal[]
+}
+
+enum LanguageValidation {
+  NOT_STARTED
+  IN_PROGRESS
+  VALIDATED
+}
+
+/// Registre des langues. Une langue n'est proposée aux bénéficiaires que si
+/// `uiAvailable` est vrai : le mina reste indisponible tant qu'il n'est pas validé.
+model Language {
+  code              String             @id // fr ; gej (gen/mina, ISO 639-3) ; ...
+  name              String
+  nativeName        String?
+  uiAvailable       Boolean            @default(false)
+  uiValidation      LanguageValidation @default(NOT_STARTED)
+  audioContents     AudioContent[]
+}
+
+// ─── Comptes, rôles, sessions ──────────────────────────────────────────────
+
+enum Role {
+  BENEFICIARY
+  AGENT
+  FACILITY_REFERENT
+  ADMIN
+}
+
+enum AccountStatus {
+  PENDING_ACTIVATION
+  ACTIVE
+  LOCKED // trop d'échecs : déverrouillage supervisé uniquement
+  DISABLED
+}
+
+model Account {
+  id                String        @id @default(uuid()) @db.Uuid
+  role              Role
+  /// Personnel : identifiant choisi. Bénéficiaire : identifiant généré RM-XXXX-XXXX.
+  loginId           String        @unique
+  /// Hash argon2id du mot de passe (personnel) ou du code personnel à 6 chiffres (bénéficiaire).
+  secretHash        String?
+  status            AccountStatus @default(PENDING_ACTIVATION)
+  displayName       String
+  failedAttempts    Int           @default(0)
+  lockedUntil       DateTime?
+  /// Secret TOTP chiffré (administrateurs) — authentification renforcée.
+  totpSecretEnc     String?
+  totpEnabled       Boolean       @default(false)
+  /// Dernier pas TOTP accepté : un même code ne peut pas être rejoué.
+  totpLastUsedStep  Int?
+  teamId            String?       @db.Uuid
+  team              Team?         @relation("TeamAgents", fields: [teamId], references: [id])
+  facilityId        String?       @db.Uuid
+  facility          HealthFacility? @relation("FacilityReferents", fields: [facilityId], references: [id])
+  /// Référent habilité à confirmer créneaux et soins pour sa structure.
+  canConfirmCare    Boolean       @default(false)
+  /// Langues parlées (agents) : affectation des messages audio à un agent compétent.
+  spokenLanguages   String[]      @default([])
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  sessions          Session[]
+  activationCodes   ActivationCode[] @relation("ActivationOwner")
+  beneficiary       Beneficiary?  @relation("BeneficiaryAccount")
+  assignedRequests  Request[]     @relation("AssignedAgent")
+}
+
+/// Session serveur opaque : le cookie porte un jeton aléatoire, la base n'en garde que le
+/// hash SHA-256. Révocable individuellement, expiration glissante et absolue.
+model Session {
+  id          String    @id // sha256(jeton)
+  accountId   String    @db.Uuid
+  account     Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  lastSeenAt  DateTime  @default(now())
+  expiresAt   DateTime
+  absoluteExpiresAt DateTime
+  revokedAt   DateTime?
+  /// Second facteur validé pendant cette session (administrateurs, fonctions sensibles).
+  mfaVerifiedAt DateTime?
+  csrfToken   String
+
+  @@index([accountId])
+}
+
+enum ActivationPurpose {
+  FIRST_ACTIVATION
+  SUPERVISED_RECOVERY
+}
+
+/// Code d'activation à usage unique, remis en main propre par un agent. Stocké haché.
+model ActivationCode {
+  id          String            @id @default(uuid()) @db.Uuid
+  accountId   String            @db.Uuid
+  account     Account           @relation("ActivationOwner", fields: [accountId], references: [id], onDelete: Cascade)
+  codeHash    String
+  purpose     ActivationPurpose
+  issuedById  String            @db.Uuid
+  createdAt   DateTime          @default(now())
+  expiresAt   DateTime
+  usedAt      DateTime?
+  revokedAt   DateTime?
+
+  @@index([accountId])
+}
+
+/// Limitation des tentatives par identifiant ET par adresse (empreinte, jamais l'IP brute).
+model AuthAttempt {
+  id        String   @id @default(uuid()) @db.Uuid
+  keyHash   String
+  success   Boolean
+  createdAt DateTime @default(now())
+
+  @@index([keyHash, createdAt])
+}
+
+// ─── Bénéficiaires, enfants, contacts, préférences, accords ────────────────
+
+model Beneficiary {
+  id            String   @id @default(uuid()) @db.Uuid
+  accountId     String   @unique @db.Uuid
+  account       Account  @relation("BeneficiaryAccount", fields: [accountId], references: [id])
+  /// Affectation : l'équipe qui suit cette femme.
+  teamId        String   @db.Uuid
+  team          Team     @relation(fields: [teamId], references: [id])
+  zoneId        String   @db.Uuid
+  zone          Zone     @relation(fields: [zoneId], references: [id])
+  preferredLocale String @default("fr")
+  /// Libellé d'activité facultatif (ex. « vendeuse au marché ») : aide à organiser les créneaux.
+  activityLabel String?
+  createdById   String   @db.Uuid
+  createdAt     DateTime @default(now())
+  deletionRequestedAt DateTime?
+
+  contact       ContactInfo?
+  preferences   ContactPreference?
+  children      Child[]
+  consents      Consent[]
+  appointments  Appointment[]
+  requests      Request[]
+  audioAssets   AudioAsset[]
+}
+
+/// Coordonnées séparées de l'identité, lisibles seulement par l'équipe affectée.
+model ContactInfo {
+  beneficiaryId String      @id @db.Uuid
+  beneficiary   Beneficiary @relation(fields: [beneficiaryId], references: [id], onDelete: Cascade)
+  phoneE164     String?
+  /// Téléphone partagé avec d'autres personnes : messages neutres obligatoires.
+  phoneIsShared Boolean     @default(true)
+  updatedAt     DateTime    @updatedAt
+}
+
+enum ContactChannel {
+  SMS
+  VOICE_CALL
+  IN_APP
+}
+
+model ContactPreference {
+  beneficiaryId   String           @id @db.Uuid
+  beneficiary     Beneficiary      @relation(fields: [beneficiaryId], references: [id], onDelete: Cascade)
+  channels        ContactChannel[] @default([IN_APP])
+  callWindowStart String           @default("15:00") // heure locale du pays
+  callWindowEnd   String           @default("19:00")
+  updatedAt       DateTime         @updatedAt
+}
+
+/// Enfant rattaché à sa mère. Pas de compte enfant. Mois de naissance seulement.
+model Child {
+  id             String        @id @default(uuid()) @db.Uuid
+  beneficiaryId  String        @db.Uuid
+  beneficiary    Beneficiary   @relation(fields: [beneficiaryId], references: [id], onDelete: Cascade)
+  firstName      String
+  birthYearMonth String        // AAAA-MM
+  appointments   Appointment[]
+}
+
+enum ConsentPurpose {
+  TRANSMIT_REQUEST // transmettre une demande à l'équipe (nécessaire au service)
+  RECEIVE_CALLBACK // être rappelée
+  KEEP_AUDIO // conserver un enregistrement audio
+  RESEARCH // participer à une recherche (facultatif, jamais bloquant)
+}
+
+/// Texte d'accord versionné : on sait toujours ce que la femme a lu.
+model ConsentText {
+  id        String         @id @default(uuid()) @db.Uuid
+  purpose   ConsentPurpose
+  version   String
+  locale    String
+  body      String
+  /// Un texte non relu (juridique, linguistique) ne doit pas être présenté en pilote réel.
+  reviewed  Boolean        @default(false)
+  createdAt DateTime       @default(now())
+
+  @@unique([purpose, version, locale])
+}
+
+/// Historique des accords : une ligne par décision, jamais modifiée.
+model Consent {
+  id            String         @id @default(uuid()) @db.Uuid
+  beneficiaryId String         @db.Uuid
+  beneficiary   Beneficiary    @relation(fields: [beneficiaryId], references: [id], onDelete: Cascade)
+  purpose       ConsentPurpose
+  granted       Boolean
+  textVersion   String
+  recordedById  String         @db.Uuid
+  /// Accord donné par la femme elle-même ou recueilli par un agent en présence.
+  assisted      Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+
+  @@index([beneficiaryId, purpose, createdAt])
+}
+
+// ─── Rendez-vous et demandes ───────────────────────────────────────────────
+
+enum AppointmentStatus {
+  SCHEDULED
+  DONE
+  CANCELLED
+}
+
+/// Rendez-vous saisi par une personne habilitée (agent ou référent), jamais généré.
+model Appointment {
+  id            String            @id @default(uuid()) @db.Uuid
+  beneficiaryId String            @db.Uuid
+  beneficiary   Beneficiary       @relation(fields: [beneficiaryId], references: [id], onDelete: Cascade)
+  childId       String?           @db.Uuid
+  child         Child?            @relation(fields: [childId], references: [id])
+  facilityId    String            @db.Uuid
+  facility      HealthFacility    @relation(fields: [facilityId], references: [id])
+  title         String
+  startsAt      DateTime
+  status        AppointmentStatus @default(SCHEDULED)
+  createdById   String            @db.Uuid
+  createdAt     DateTime          @default(now())
+  requests      Request[]
+}
+
+enum RequestState {
+  RECEIVED
+  UNDER_REVIEW
+  ACTION_AGREED
+  AWAITING_COMPLETION
+  CARE_DECLARED
+  CARE_VERIFIED
+  CLOSED_WITHOUT_CARE
+}
+
+enum RequestCategory {
+  TRANSPORT
+  COST
+  AVAILABILITY
+  UNDERSTANDING
+  OTHER_CALLBACK
+  HEALTH_QUESTION
+}
+
+enum CategorySource {
+  BENEFICIARY_CHOICE
+  MODEL_SUGGESTION
+  HEALTH_REVIEW_RULE
+  AGENT_DECISION
+  NONE
+}
+
+model Request {
+  id               String          @id @default(uuid()) @db.Uuid
+  /// Clé d'idempotence fournie par le client : un nouvel essai ne crée pas de doublon.
+  idempotencyKey   String          @unique @db.Uuid
+  beneficiaryId    String          @db.Uuid
+  beneficiary      Beneficiary     @relation(fields: [beneficiaryId], references: [id], onDelete: Cascade)
+  /// Copie de l'équipe au moment de la demande : base du contrôle d'accès agent.
+  teamId           String          @db.Uuid
+  team             Team            @relation(fields: [teamId], references: [id])
+  assignedAgentId  String?         @db.Uuid
+  assignedAgent    Account?        @relation("AssignedAgent", fields: [assignedAgentId], references: [id])
+  appointmentId    String?         @db.Uuid
+  appointment      Appointment?    @relation(fields: [appointmentId], references: [id])
+  state            RequestState    @default(RECEIVED)
+  category         RequestCategory?
+  categorySource   CategorySource  @default(NONE)
+  /// Texte court de la femme (1 000 caractères max). Jamais journalisé.
+  text             String          @default("")
+  locale           String
+  audioId          String?         @unique @db.Uuid
+  audio            AudioAsset?     @relation(fields: [audioId], references: [id])
+  /// Verrou optimiste : toute modification exige la version attendue.
+  version          Int             @default(0)
+  createdAt        DateTime        @default(now())
+  firstViewedAt    DateTime?       // « consulté par un agent »
+  firstHumanResponseAt DateTime?
+  actionAgreedAt   DateTime?
+  closedAt         DateTime?
+  closeReason      String?
+
+  events           RequestEvent[]
+  actions          Action[]
+  slots            SlotProposal[]
+  messages         Message[]
+  declarations     CareDeclaration[]
+  verifications    CareVerification[]
+  suggestion       ModelSuggestion?
+
+  @@index([teamId, state])
+  @@index([assignedAgentId])
+}
+
+/// Journal des événements d'une demande. Jamais modifié ni supprimé par l'application.
+/// `data` ne contient ni texte libre de la femme, ni téléphone.
+model RequestEvent {
+  id         String        @id @default(uuid()) @db.Uuid
+  requestId  String        @db.Uuid
+  request    Request       @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  type       String
+  actorId    String?       @db.Uuid // null pour SYSTEM
+  actorRole  String
+  fromState  RequestState?
+  toState    RequestState?
+  data       Json?
+  createdAt  DateTime      @default(now())
+
+  @@index([requestId, createdAt])
+}
+
+enum CostStatus {
+  TO_VERIFY
+  KNOWN
+}
+
+/// Action concrète décidée par l'agent. N'est PAS une réservation auprès d'une structure.
+model Action {
+  id          String     @id @default(uuid()) @db.Uuid
+  requestId   String     @db.Uuid
+  request     Request    @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  agentId     String     @db.Uuid
+  description String
+  costStatus  CostStatus @default(TO_VERIFY)
+  costAmountXof Int?
+  costSource  String?
+  createdAt   DateTime   @default(now())
+}
+
+enum SlotStatus {
+  PROPOSED // proposé par l'agent
+  ACCEPTED // accepté par la femme
+  DECLINED // refusé par la femme
+  ALTERNATIVE_REQUESTED // la femme demande un autre créneau
+  CONFIRMED_BY_FACILITY // confirmé par la structure (référent habilité)
+  SUPERSEDED // remplacé par une autre proposition
+}
+
+model SlotProposal {
+  id            String         @id @default(uuid()) @db.Uuid
+  requestId     String         @db.Uuid
+  request       Request        @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  facilityId    String         @db.Uuid
+  facility      HealthFacility @relation(fields: [facilityId], references: [id])
+  startsAt      DateTime
+  status        SlotStatus     @default(PROPOSED)
+  proposedById  String         @db.Uuid
+  note          String?
+  respondedAt   DateTime?
+  beneficiaryComment String?
+  facilityConfirmedById String? @db.Uuid
+  facilityConfirmedAt   DateTime?
+  createdAt     DateTime       @default(now())
+
+  @@index([facilityId, startsAt])
+}
+
+/// Déclaration de soin reçu : parole de la femme (ou recueillie pour elle), PAS une vérification.
+model CareDeclaration {
+  id           String   @id @default(uuid()) @db.Uuid
+  requestId    String   @db.Uuid
+  request      Request  @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  careDate     String   // AAAA-MM-JJ, date civile du pays
+  declaredById String   @db.Uuid
+  declaredByRole String
+  createdAt    DateTime @default(now())
+}
+
+enum VerificationSource {
+  FACILITY_CONFIRMATION
+  AGENT_VERIFICATION
+}
+
+enum VerificationMethod {
+  PHONE_CALL
+  IN_PERSON
+  FACILITY_REGISTER
+  OTHER
+}
+
+/// Vérification par une source humaine identifiée. Une correction crée une nouvelle ligne
+/// qui remplace l'ancienne (`supersededById`) : l'historique est conservé.
+model CareVerification {
+  id            String             @id @default(uuid()) @db.Uuid
+  requestId     String             @db.Uuid
+  request       Request            @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  careDate      String
+  source        VerificationSource
+  method        VerificationMethod
+  verifiedById  String             @db.Uuid
+  verifiedByRole String
+  note          String
+  correctionReason String?
+  supersededById String?           @unique @db.Uuid
+  supersededBy  CareVerification?  @relation("VerificationCorrection", fields: [supersededById], references: [id])
+  supersedes    CareVerification?  @relation("VerificationCorrection")
+  revokedAt     DateTime?
+  revokedReason String?
+  createdAt     DateTime           @default(now())
+}
+
+enum MessageDirection {
+  TO_BENEFICIARY
+  FROM_BENEFICIARY
+}
+
+model Message {
+  id         String           @id @default(uuid()) @db.Uuid
+  requestId  String           @db.Uuid
+  request    Request          @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  authorId   String           @db.Uuid
+  direction  MessageDirection
+  body       String
+  createdAt  DateTime         @default(now())
+  readAt     DateTime?
+}
+
+// ─── IA : suggestions du modèle et décision humaine ────────────────────────
+
+model ModelSuggestion {
+  id                String           @id @default(uuid()) @db.Uuid
+  requestId         String           @unique @db.Uuid
+  request           Request          @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  modelVersion      String
+  ruleVersion       String
+  suggestedCategory RequestCategory?
+  topCategory       RequestCategory?
+  abstained         Boolean
+  abstentionReason  String?
+  /// Score relatif entre catégories logistiques. Pas une probabilité médicale.
+  score             Float?
+  recognizedTokens  Int
+  healthReviewCue   Boolean
+  /// Décision humaine finale, obligatoire avant toute action logistique.
+  finalCategory     RequestCategory?
+  decidedById       String?          @db.Uuid
+  decidedAt         DateTime?
+  createdAt         DateTime         @default(now())
+}
+
+// ─── Audio ─────────────────────────────────────────────────────────────────
+
+/// Enregistrement volontaire d'une femme. Privé, accès temporaire après autorisation serveur.
+model AudioAsset {
+  id            String       @id @default(uuid()) @db.Uuid
+  beneficiaryId String       @db.Uuid
+  beneficiary   Beneficiary  @relation(fields: [beneficiaryId], references: [id], onDelete: Cascade)
+  storageKey    String       @unique
+  mimeType      String
+  sizeBytes     Int
+  durationSeconds Int?
+  locale        String
+  createdAt     DateTime     @default(now())
+  deletedAt     DateTime?
+  /// Transcription humaine (jamais automatique sans activation explicite).
+  transcription String?
+  transcribedById String?    @db.Uuid
+  request       Request?
+}
+
+enum ContentValidation {
+  MISSING
+  DRAFT
+  VALIDATED
+  REJECTED
+}
+
+/// Registre des contenus audio validés (consignes, explications). Le mina est vide tant
+/// que des locutrices compétentes n'ont pas fourni ou validé les enregistrements.
+model AudioContent {
+  id           String            @id @default(uuid()) @db.Uuid
+  messageKey   String
+  locale       String
+  language     Language          @relation(fields: [locale], references: [code])
+  transcript   String
+  storageKey   String?
+  version      Int               @default(1)
+  provenance   String            // auteur ou origine
+  validation   ContentValidation @default(MISSING)
+  validatedAt  DateTime?
+  validatedBy  String?
+  createdAt    DateTime          @default(now())
+
+  @@unique([messageKey, locale, version])
+}
+
+// ─── Notifications (outbox), webhooks, connecteurs ─────────────────────────
+
+enum NotificationStatus {
+  PENDING
+  SENDING
+  SENT_SIMULATED
+  SENT
+  FAILED
+  CANCELLED
+}
+
+/// Table d'outbox : écrite dans la même transaction que l'événement métier, traitée par le
+/// worker. Le contenu est un modèle neutre (aucune information de santé sur un téléphone partagé).
+model Notification {
+  id             String             @id @default(uuid()) @db.Uuid
+  idempotencyKey String             @unique
+  channel        ContactChannel
+  recipientId    String             @db.Uuid // compte destinataire
+  templateKey    String
+  locale         String
+  status         NotificationStatus @default(PENDING)
+  provider       String?
+  providerMessageId String?         @unique
+  attempts       Int                @default(0)
+  maxAttempts    Int                @default(3)
+  nextAttemptAt  DateTime           @default(now())
+  lastError      String?
+  costMicroUnits Int?
+  costCurrency   String?
+  createdAt      DateTime           @default(now())
+  sentAt         DateTime?
+
+  @@index([status, nextAttemptAt])
+}
+
+/// Webhooks reçus : anti-rejeu par identifiant d'événement unique du fournisseur.
+model WebhookEvent {
+  id            String   @id @default(uuid()) @db.Uuid
+  provider      String
+  externalId    String
+  receivedAt    DateTime @default(now())
+  payloadSha256 String
+
+  @@unique([provider, externalId])
+}
+
+enum ConnectorKind {
+  SMS
+  VOICE
+  TRANSCRIPTION
+  FACILITY
+}
+
+/// État des connecteurs. Un connecteur réel n'est activable que si ses identifiants sont
+/// présents dans l'environnement (jamais stockés ici).
+model ConnectorSetting {
+  kind        ConnectorKind @id
+  provider    String        @default("simulator")
+  enabled     Boolean       @default(true)
+  updatedById String?       @db.Uuid
+  updatedAt   DateTime      @updatedAt
+}
+
+/// Journal d'audit des actions sensibles (comptes, exports, connecteurs, suppressions).
+model AuditLog {
+  id        String   @id @default(uuid()) @db.Uuid
+  actorId   String?  @db.Uuid
+  action    String
+  targetType String?
+  targetId  String?
+  data      Json?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+enum DeletionStatus {
+  REQUESTED
+  COMPLETED
+  REJECTED
+}
+
+/// Demande de suppression de profil : procédure supervisée, traces d'audit minimales conservées.
+model DeletionRequest {
+  id            String         @id @default(uuid()) @db.Uuid
+  beneficiaryId String         @db.Uuid
+  status        DeletionStatus @default(REQUESTED)
+  requestedAt   DateTime       @default(now())
+  processedById String?        @db.Uuid
+  processedAt   DateTime?
+  note          String?
+}

@@ -1,0 +1,38 @@
+{
+  "modelVersion": "naive-bayes-fr-0.1",
+  "locale": "fr",
+  "examples": 20,
+  "correct": 14,
+  "incorrect": 0,
+  "abstentions": 6,
+  "overallAccuracy": 0.7,
+  "coverage": 0.7,
+  "perCategory": {
+    "TRANSPORT": {
+      "examples": 5,
+      "correct": 5,
+      "incorrect": 0,
+      "abstentions": 0
+    },
+    "COST": {
+      "examples": 5,
+      "correct": 4,
+      "incorrect": 0,
+      "abstentions": 1
+    },
+    "AVAILABILITY": {
+      "examples": 5,
+      "correct": 3,
+      "incorrect": 0,
+      "abstentions": 2
+    },
+    "UNDERSTANDING": {
+      "examples": 5,
+      "correct": 2,
+      "incorrect": 0,
+      "abstentions": 3
+    }
+  },
+  "confusion": [],
+  "caveat": "Jeu synthétique rédigé par l'auteur des données d'entraînement : ni benchmark indépendant, ni validation médicale, ni mesure sur le mina."
+}

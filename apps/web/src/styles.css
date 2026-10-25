@@ -1,0 +1,130 @@
+/*
+ * Identité du prototype, contrastes CALCULÉS (WCAG 2.1, scripts/contrast.mjs) :
+ * texte #243a34 / fond #f7f5ef = 11,1 ; vert #174f46 / fond = 8,6 ; blanc / vert = 9,4 ;
+ * texte / pêche = 7,2. Le pêche sur le fond (1,55) ÉCHOUE : il n'est jamais utilisé comme
+ * couleur de texte ou d'icône, seulement comme fond sous un texte foncé.
+ */
+:root {
+  --green: #174f46;
+  --green-deep: #123b35;
+  --peach: #f3bc98;
+  --bg: #f7f5ef;
+  --text: #243a34;
+  --muted: #4a5c56;
+  --surface: #ffffff;
+  --border: #c9d2ce;
+  --error: #8a1c1c;
+  --error-bg: #fbe9e7;
+  --ok-bg: #e3efe9;
+  --focus: #123b35;
+  --radius: 14px;
+  --tap: 48px;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', sans-serif;
+  font-size: 18px;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--bg);
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; }
+img, svg { max-width: 100%; }
+
+/* Focus clavier toujours visible. */
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+
+.skip-link { position: absolute; left: -9999px; }
+.skip-link:focus { left: 1rem; top: 1rem; background: var(--surface); padding: .75rem 1rem; z-index: 10; }
+
+.app-header {
+  background: var(--green); color: #fff; padding: .75rem 1rem;
+  display: flex; align-items: center; justify-content: space-between; gap: .75rem; flex-wrap: wrap;
+}
+.app-header a, .app-header button { color: #fff; }
+.brand { display: flex; align-items: center; gap: .5rem; font-weight: 700; text-decoration: none; }
+.brand img { width: 36px; height: 36px; }
+
+main { max-width: 40rem; margin: 0 auto; padding: 1rem; }
+main.wide { max-width: 72rem; }
+
+h1 { font-size: 1.5rem; line-height: 1.25; margin: .5rem 0 1rem; color: var(--green-deep); }
+h2 { font-size: 1.2rem; margin: 1.5rem 0 .75rem; color: var(--green-deep); }
+p { margin: 0 0 .75rem; }
+.muted { color: var(--muted); }
+.small { font-size: .9rem; }
+
+.card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 1rem; margin-bottom: 1rem;
+}
+.card.highlight { background: var(--peach); border-color: var(--peach); color: var(--green-deep); }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+  min-height: var(--tap); min-width: var(--tap); padding: .7rem 1.2rem;
+  border-radius: var(--radius); border: 2px solid var(--green);
+  background: var(--green); color: #fff; font: inherit; font-weight: 600; cursor: pointer; text-decoration: none;
+}
+.btn.secondary { background: var(--surface); color: var(--green); }
+.btn.danger { background: var(--error); border-color: var(--error); }
+.btn.block { width: 100%; }
+.btn[disabled] { opacity: .55; cursor: not-allowed; }
+.stack > * + * { margin-top: .75rem; }
+.row { display: flex; gap: .75rem; flex-wrap: wrap; }
+
+/* Grands boutons de choix : une icône TOUJOURS accompagnée d'un libellé. */
+.choice-grid { display: grid; gap: .75rem; grid-template-columns: 1fr; }
+@media (min-width: 30rem) { .choice-grid { grid-template-columns: 1fr 1fr; } }
+.choice {
+  min-height: 72px; display: flex; align-items: center; gap: .75rem; text-align: left;
+  padding: .9rem 1rem; border: 2px solid var(--border); border-radius: var(--radius); background: var(--surface);
+  font: inherit; color: var(--text); cursor: pointer;
+}
+.choice[aria-pressed='true'] { border-color: var(--green); background: var(--ok-bg); box-shadow: inset 0 0 0 2px var(--green); }
+.choice .icon { font-size: 1.6rem; width: 2rem; text-align: center; }
+
+label { display: block; font-weight: 600; margin-bottom: .35rem; }
+input, select, textarea {
+  width: 100%; min-height: var(--tap); padding: .65rem .8rem; font: inherit; color: var(--text);
+  border: 2px solid var(--border); border-radius: 10px; background: var(--surface);
+}
+textarea { min-height: 7rem; resize: vertical; }
+.field { margin-bottom: 1rem; }
+.check { display: flex; gap: .75rem; align-items: flex-start; font-weight: 400; }
+.check input { width: 28px; height: 28px; min-height: 28px; flex: none; margin-top: .1rem; }
+
+.alert { padding: .9rem 1rem; border-radius: var(--radius); margin-bottom: 1rem; border: 2px solid; }
+.alert.error { background: var(--error-bg); border-color: var(--error); color: var(--error); }
+.alert.info { background: var(--ok-bg); border-color: var(--green); color: var(--green-deep); }
+.alert.offline { background: var(--peach); border-color: var(--green-deep); color: var(--green-deep); }
+
+/* Statut : texte + symbole, jamais la couleur seule. */
+.status { display: inline-flex; align-items: center; gap: .35rem; font-weight: 600; font-size: .95rem;
+  padding: .2rem .6rem; border-radius: 999px; border: 2px solid var(--green); color: var(--green-deep); background: var(--surface); }
+.status.done { background: var(--ok-bg); }
+.status.closed { border-color: var(--muted); color: var(--muted); }
+
+.steps { list-style: none; padding: 0; margin: 0; }
+.steps li { padding: .5rem 0 .5rem 2rem; position: relative; border-left: 3px solid var(--border); margin-left: .6rem; }
+.steps li::before { content: '○'; position: absolute; left: -.7rem; background: var(--bg); color: var(--muted); }
+.steps li.done { border-left-color: var(--green); }
+.steps li.done::before { content: '✓'; color: var(--green); font-weight: 700; }
+
+table { width: 100%; border-collapse: collapse; font-size: .95rem; }
+th, td { text-align: left; padding: .55rem .5rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+/* position: relative : les éléments masqués en position absolue (intitulés pour lecteurs
+   d'écran) restent contenus ; sinon ils s'échappaient et faisaient dézoomer la page mobile. */
+.table-wrap { overflow-x: auto; position: relative; }
+.filters { display: grid; gap: .75rem; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); }
+.badge { display: inline-block; font-size: .8rem; padding: .1rem .5rem; border-radius: 999px; background: var(--peach); color: var(--green-deep); font-weight: 600; }
+.code-once { font-family: ui-monospace, Menlo, monospace; font-size: 1.6rem; letter-spacing: .1em; background: var(--peach); color: var(--green-deep); padding: .5rem .8rem; border-radius: 10px; display: inline-block; }
+.visually-hidden { position: absolute; left: 0; top: 0; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+footer { max-width: 40rem; margin: 2rem auto; padding: 0 1rem; font-size: .85rem; color: var(--muted); }
+
+/* Bouton sur l'en-tête vert : blanc sur vert (9,4). Placé après .btn.secondary pour
+   l'emporter : sans cela le texte était vert sur vert, donc invisible. */
+.app-header .btn.on-dark { background: transparent; color: #fff; border-color: #fff; }

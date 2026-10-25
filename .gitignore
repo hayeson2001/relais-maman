@@ -1,6 +1,14 @@
 .DS_Store
 .env
 .env.*
+!.env.example
 node_modules/
 coverage/
 artifacts/
+dist/
+!legacy/prototype-v0.1/dist/
+apps/api/src/generated/
+.local/
+playwright-report/
+test-results/
+*.tsbuildinfo

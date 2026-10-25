@@ -1,13 +1,35 @@
 {
-  "name": "relais-maman-prototype",
-  "version": "0.1.0",
+  "name": "relais-maman",
+  "version": "0.2.0",
   "private": true,
-  "type": "module",
-  "description": "Offline-first maternal and child care coordination research prototype. Synthetic data only.",
   "license": "MIT",
+  "description": "Relais Maman — coordination humaine des obstacles pratiques aux soins mère-enfant. Données fictives uniquement.",
+  "workspaces": [
+    "packages/core",
+    "apps/api",
+    "apps/web"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
-    "start": "node scripts/serve.mjs",
-    "test": "node --test tests/*.test.mjs",
-    "evaluate": "node scripts/evaluate.mjs"
+    "db:start": "node scripts/local-db.mjs start",
+    "db:stop": "node scripts/local-db.mjs stop",
+    "db:migrate": "npm run migrate -w apps/api",
+    "demo:reset": "npm run demo:reset -w apps/api",
+    "dev:api": "npm run dev -w apps/api",
+    "dev:web": "npm run dev -w apps/web",
+    "worker": "npm run worker -w apps/api",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "test:e2e": "npm run test:e2e -w apps/web",
+    "build": "npm run build --workspaces --if-present",
+    "evaluate": "npm run evaluate -w packages/core",
+    "legacy:start": "cd legacy/prototype-v0.1 && node scripts/serve.mjs",
+    "legacy:test": "cd legacy/prototype-v0.1 && node --test tests/*.test.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.5",
+    "typescript": "6.0.3"
   }
 }

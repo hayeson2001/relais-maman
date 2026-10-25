@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "CategorySource" ADD VALUE 'HEALTH_REVIEW_RULE';
