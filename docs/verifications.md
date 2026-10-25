@@ -1,6 +1,6 @@
 # Rapport des vérifications — v0.2 (25/10/2026)
 
-Exécutées sur un Mac Apple Silicon, Node.js 26, PostgreSQL 16 local, Chromium 156 (Playwright 1.64.1). La CI (Node 22, PostgreSQL en service) est écrite mais **n'a pas encore tourné sur GitHub** : rien n'a été poussé.
+Exécutées sur un Mac Apple Silicon, Node.js 26, PostgreSQL 16 local, Chromium 156 (Playwright 1.64.1). La CI GitHub (Ubuntu, Node 22, PostgreSQL 16 en service) a réussi toutes ses étapes à sa première exécution, sur le commit `b21c2dd` du 25/10/2026 : https://github.com/hayeson2001/relais-maman/actions/runs/40212914500
 
 ## Résultats mesurés
 
