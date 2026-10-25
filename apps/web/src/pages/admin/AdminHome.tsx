@@ -100,10 +100,12 @@ function MetricsTab() {
   const m = useLoad(() => api.get<Metrics>('/api/admin/metrics'))
   if (!m.data) return <LoadState loading={m.loading} error={m.error} onRetry={m.reload} />
   const d = m.data
-  const delay = (x: Delay) => (x.medianHours === null ? t('admin.notAvailable') : `médiane ${x.medianHours} h · moyenne ${x.meanHours} h (${x.measured} mesurées, ${x.missing} sans valeur)`)
+  const hours = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 })
+  const delay = (x: Delay) => (x.medianHours === null || x.meanHours === null ? t('admin.notAvailable') : `médiane ${hours.format(x.medianHours)} h · moyenne ${hours.format(x.meanHours)} h (${x.measured} mesurées, ${x.missing} sans valeur)`)
   return (
     <>
-      <Alert>{t('admin.caveat')} {d.caveat}</Alert>
+      {/* Avertissement traduisible seulement : celui du serveur répétait la même idée. */}
+      <Alert>{t('admin.caveat')}</Alert>
       <p className="small">{t('admin.period')} : {formatDateTime(d.period.from)} → {formatDateTime(d.period.to)} — {d.period.basis}</p>
       <p>Reçues : <strong>{d.requests.received}</strong> · en cours : {d.requests.open} · clôturées : {d.requests.closed}</p>
       <div className="table-wrap">

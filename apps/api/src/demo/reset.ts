@@ -1,5 +1,5 @@
 import { rm } from 'node:fs/promises'
-import { demoResetAllowed, loadConfig } from '../config.ts'
+import { demoResetAllowed, loadConfig, type AppConfig } from '../config.ts'
 import { createDb, type Db } from '../db.ts'
 import { DEMO, seedDemo } from './seed.ts'
 import { currentTotp } from '../auth/totp.ts'
@@ -13,8 +13,16 @@ export async function truncateAll(db: Db) {
   }
 }
 
+/** Vide la base et recrée les données fictives. Refusé hors APP_ENV local/test/demo. */
+export async function resetDemo(db: Db, config: AppConfig, now = new Date()) {
+  if (!demoResetAllowed(config)) throw new Error(`Remise à zéro refusée : APP_ENV=${config.APP_ENV}.`)
+  await truncateAll(db)
+  if (config.STORAGE_DRIVER === 'local') await rm(config.STORAGE_LOCAL_DIR, { recursive: true, force: true })
+  return seedDemo(db, now)
+}
+
 /**
- * Remise à zéro de la démonstration : CLI uniquement, refusée hors APP_ENV local/test/demo.
+ * Remise à zéro de la démonstration : en ligne de commande, ou chaque nuit avec DEMO_AUTO_RESET (démo publique), refusée hors APP_ENV local/test/demo.
  * Aucun bouton public ne déclenche cette opération.
  */
 async function main() {
@@ -24,9 +32,7 @@ async function main() {
     process.exit(1)
   }
   const db = createDb(config.DATABASE_URL)
-  await truncateAll(db)
-  if (config.STORAGE_DRIVER === 'local') await rm(config.STORAGE_LOCAL_DIR, { recursive: true, force: true })
-  await seedDemo(db)
+  await resetDemo(db, config)
   await db.$disconnect()
 
   console.log('\nDémonstration réinitialisée (données fictives).\n')

@@ -100,6 +100,18 @@
         }
       }
     },
+    "/api/public/demo-accounts": {
+      "get": {
+        "tags": [
+          "public"
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
     "/api/public/languages": {
       "get": {
         "tags": [

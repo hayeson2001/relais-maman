@@ -1,0 +1,15 @@
+.git
+.github
+.env
+.env.*
+!.env.example
+.local
+node_modules
+**/node_modules
+**/dist
+!legacy/prototype-v0.1/dist
+apps/api/src/generated
+artifacts
+playwright-report
+test-results
+**/.DS_Store

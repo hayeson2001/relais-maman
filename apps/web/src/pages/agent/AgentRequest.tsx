@@ -2,7 +2,7 @@ import { useState, type FormEvent, type ReactNode } from 'react'
 import { useParams } from '../../router.tsx'
 import { useTranslation } from 'react-i18next'
 import { Layout } from '../../components/Layout.tsx'
-import { Alert, LoadState, StateBadge, errorMessage, formatDate, formatDateTime, todayCivil, useLoad } from '../../components/ui.tsx'
+import { Alert, LoadState, StateBadge, stateLabel, errorMessage, formatDate, formatDateTime, todayCivil, useLoad } from '../../components/ui.tsx'
 import { api, ApiError } from '../../api/client.ts'
 import { AgentNav } from './Queue.tsx'
 
@@ -77,7 +77,7 @@ export function AgentRequest() {
       {d && ctx && (
         <div className="stack">
           <h1>{d.beneficiary.account.displayName} · {t(`categories.${d.category ?? 'none'}`)}</h1>
-          <p><StateBadge state={d.state} /> <span className="small muted">version {d.version}</span></p>
+          <p><StateBadge staff state={d.state} /> <span className="small muted">version {d.version}</span></p>
           {!d.consents.transmit && <Alert kind="error">{t('agent.transmitWithdrawn')}</Alert>}
 
           <Section title="Demande">
@@ -106,12 +106,12 @@ export function AgentRequest() {
               <>
                 {d.suggestion.healthReviewCue && <Alert kind="error">⚠ {t('agent.healthCue')} — {t('request.healthNotice')}</Alert>}
                 {d.suggestion.abstained ? <p>{t('agent.abstained')}</p> : (
-                  <p>{t(`categories.${d.suggestion.suggestedCategory}`)} ({t('agent.score')} {d.suggestion.score?.toFixed(2)}, {d.suggestion.modelVersion})</p>
+                  <p>{t(`categories.${d.suggestion.suggestedCategory}`)} ({t('agent.score')} {d.suggestion.score === null ? '—' : new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 }).format(d.suggestion.score)}, {d.suggestion.modelVersion})</p>
                 )}
                 {d.suggestion.finalCategory && <p>✓ Décision : {t(`categories.${d.suggestion.finalCategory}`)}</p>}
               </>
             ) : <p className="muted">—</p>}
-            <p>Origine actuelle : <strong>{d.categorySource}</strong></p>
+            <p>{t('agent.categorySource')} : <strong>{t(`categorySources.${d.categorySource}`)}</strong></p>
             <form className="row" onSubmit={(e) => { const f = form(e); void run((v) => api.post(`/api/agent/requests/${id}/category`, { expectedVersion: v, category: f.category })) }}>
               <label className="visually-hidden" htmlFor="cat">{t('agent.category')}</label>
               <select id="cat" name="category" defaultValue={d.category ?? 'TRANSPORT'} style={{ maxWidth: '20rem' }}>
@@ -264,7 +264,7 @@ export function AgentRequest() {
           )}
 
           <Section title={t('agent.history')}>
-            <ol className="small">{d.events.map((e) => <li key={e.id}>{formatDateTime(e.createdAt)} — {e.type} ({e.actorRole}){e.toState ? ` → ${t(`states.${e.toState}`)}` : ''}</li>)}</ol>
+            <ol className="small">{d.events.map((e) => <li key={e.id}>{formatDateTime(e.createdAt)} — {e.type} ({e.actorRole}){e.toState ? ` → ${stateLabel(t, e.toState, true)}` : ''}</li>)}</ol>
           </Section>
         </div>
       )}

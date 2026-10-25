@@ -89,9 +89,10 @@ export async function seedDemo(db: Db, now = new Date()) {
     db.account.create({ data: { loginId, secretHash: await hashSecret(password), status: 'ACTIVE', ...data } as never })
 
   const appSecret = process.env.APP_SECRET ?? ''
-  const admin = await staff(DEMO.admin.loginId, DEMO.admin.password, {
+  // Démo publique : les secrets admin publiés dans le dépôt sont remplacés (voir config.ts).
+  const admin = await staff(DEMO.admin.loginId, process.env.DEMO_ADMIN_PASSWORD ?? DEMO.admin.password, {
     role: 'ADMIN', displayName: 'Administratrice démo',
-    totpEnabled: true, totpSecretEnc: encrypt(appSecret, DEMO.admin.totpSecret),
+    totpEnabled: true, totpSecretEnc: encrypt(appSecret, process.env.DEMO_ADMIN_TOTP_SECRET ?? DEMO.admin.totpSecret),
   })
   const agentEst = await staff(DEMO.agentEst.loginId, DEMO.agentEst.password, { role: 'AGENT', displayName: 'Esi (agente, équipe Est)', teamId: teamEst.id, spokenLanguages: ['fr', 'gej'] })
   await staff(DEMO.agentEst2.loginId, DEMO.agentEst2.password, { role: 'AGENT', displayName: 'Kodjo (agent, équipe Est)', teamId: teamEst.id, spokenLanguages: ['fr'] })

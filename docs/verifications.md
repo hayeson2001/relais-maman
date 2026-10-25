@@ -10,7 +10,7 @@ Exécutées sur un Mac Apple Silicon, Node.js 26, PostgreSQL 16 local, Chromium 
 | Contrastes WCAG des couleurs utilisées (script) | 10/10 ≥ seuil ; pêche sur fond (1,55) jamais utilisé en texte |
 | Contrôle des types (core, API, web) | OK |
 | Tests métier `packages/core` | **19/19** (dont parité exacte avec le prototype : 14 correctes, 6 abstentions, 0 erreur) |
-| Tests d'intégration API contre PostgreSQL réel | **75/75** (scénario d'Ama, autorisations, règles, authentification, audio, outbox, webhooks, journaux) |
+| Tests d'intégration API contre PostgreSQL réel | **84/84** (scénario d'Ama, autorisations, règles, authentification, audio, outbox, webhooks, journaux, hébergement de la démo) |
 | Tests unitaires interface | **8/8** (normalisation des identifiants, file d'envoi) |
 | Prototype v0.1 conservé | **11/11** |
 | Parcours navigateur Playwright, écran 360 px | **12/12** |
@@ -19,7 +19,8 @@ Exécutées sur un Mac Apple Silicon, Node.js 26, PostgreSQL 16 local, Chromium 
 | `npm audit --omit=dev` | 0 vulnérabilité |
 | Sauvegarde `pg_dump` puis restauration dans une base neuve | comptages identiques |
 | Démarrage réel de l'API, remise à zéro refusée en `production` | OK |
-| Spécification OpenAPI | 53 routes |
+| Spécification OpenAPI | 54 routes |
+| Démarrage de la démo hébergée, simulé hors Docker (copie propre selon `.dockerignore`, `npm ci`, compilation, variables du `Dockerfile`, base vide) | migrations appliquées, données fictives créées, worker lancé, cookie `Secure`, mot de passe admin du dépôt refusé ; redémarrage sur base remplie sans re-création ; accueil à 360 px sans défilement horizontal |
 
 ## Défauts trouvés par ces vérifications, puis corrigés
 
@@ -34,6 +35,7 @@ Exécutées sur un Mac Apple Silicon, Node.js 26, PostgreSQL 16 local, Chromium 
 - Interface servie **non compressée** (329 Ko, 7,7 s) (mesure de performance).
 - Limitation des requêtes par IP : plusieurs agents derrière une même box se bloquaient (navigateur).
 - Ressources statiques manquantes renvoyées en HTML au lieu de 404 (diagnostic).
+- Captures pour la vidéo (25/10/2026) : statut « Vous avez dit avoir reçu le soin » affiché au **centre** et à l'agent ; origine de catégorie en code brut ; avertissement des indicateurs en double ; nombres au format anglais (« 0.5 h »).
 - Racines trop ambiguës dans le signal santé (« tombe », « chaud », « vision ») ; tag d'image MinIO inexistant ; versions d'actions GitHub obsolètes ; numéros de démo dans une plage togolaise réelle (relecture).
 
 ## Simulé (ne prouve pas le comportement réel)
@@ -51,7 +53,8 @@ Exécutées sur un Mac Apple Silicon, Node.js 26, PostgreSQL 16 local, Chromium 
 - Aucune locutrice du **mina** ; aucun audio produit.
 - Lecture à voix haute avec une vraie voix française (dépend du téléphone).
 - Stockage S3 (SeaweedFS) : le pilote S3 est écrit mais n'a pas été exécuté (Docker indisponible) ; seul le stockage local est testé.
-- Docker Compose : fichier écrit, non exécuté sur cette machine.
+- Docker Compose et `Dockerfile` : fichiers écrits, **non exécutés** sur cette machine (Docker indisponible) ; le démarrage a été simulé hors conteneur.
+- Démo en ligne : non déployée (Railway, Cloudflare) ; nécessite le compte et l'accord du porteur.
 - Charge, montée en volume, sauvegardes automatiques, supervision.
 
 Les tests automatisés ne remplacent pas une expérimentation avec des utilisatrices.

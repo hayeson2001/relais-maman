@@ -82,7 +82,8 @@
     "AWAITING_COMPLETION": "",
     "CARE_DECLARED": "",
     "CARE_VERIFIED": "",
-    "CLOSED_WITHOUT_CARE": ""
+    "CLOSED_WITHOUT_CARE": "",
+    "CARE_DECLARED_STAFF": ""
   },
   "slotStatus": {
     "PROPOSED": "",
@@ -287,7 +288,8 @@
     "activationCode": "",
     "validUntil": "",
     "recovery": "",
-    "recoveryHelp": ""
+    "recoveryHelp": "",
+    "categorySource": ""
   },
   "facility": {
     "title": "",
@@ -321,5 +323,12 @@
     "notImplemented": "",
     "createAccount": "",
     "tempPassword": ""
+  },
+  "categorySources": {
+    "BENEFICIARY_CHOICE": "",
+    "MODEL_SUGGESTION": "",
+    "HEALTH_REVIEW_RULE": "",
+    "AGENT_DECISION": "",
+    "NONE": ""
   }
 }

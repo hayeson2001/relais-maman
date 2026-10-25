@@ -2,6 +2,7 @@ import { Link, Navigate } from '../../router.tsx'
 import { useTranslation } from 'react-i18next'
 import { Layout } from '../../components/Layout.tsx'
 import { ListenButton } from '../../components/ListenButton.tsx'
+import { DemoPanel } from '../../components/DemoPanel.tsx'
 import { useLoad } from '../../components/ui.tsx'
 import { api } from '../../api/client.ts'
 import { useSession } from '../../session/SessionContext.tsx'
@@ -40,6 +41,8 @@ export function Home() {
           <p className="small muted">{t('home.languageOnlyAvailable')}</p>
         </div>
       )}
+
+      <DemoPanel />
     </Layout>
   )
 }

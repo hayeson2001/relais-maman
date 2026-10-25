@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { ApiError, NetworkError } from '../api/client.ts'
 
 export const TIME_ZONE = 'Africa/Lome'
@@ -31,10 +32,15 @@ export function Alert({ kind = 'info', children }: { kind?: 'info' | 'error' | '
   )
 }
 
+/** Libellé d'un état. Côté équipe, la déclaration de soin n'est pas formulée à la 2e personne. */
+export function stateLabel(t: TFunction, state: string, staff = false) {
+  return staff && state === 'CARE_DECLARED' ? t('states.CARE_DECLARED_STAFF') : t(`states.${state}`)
+}
+
 /** État serveur ou local : libellé + symbole, jamais la couleur seule. */
-export function StateBadge({ state, viewed }: { state: string; viewed?: boolean }) {
+export function StateBadge({ state, viewed, staff }: { state: string; viewed?: boolean; staff?: boolean }) {
   const { t } = useTranslation()
-  const label = state === 'RECEIVED' && viewed ? t('states.VIEWED') : t(`states.${state}`)
+  const label = state === 'RECEIVED' && viewed ? t('states.VIEWED') : stateLabel(t, state, staff)
   const symbol = state === 'CARE_VERIFIED' ? '✓✓' : state === 'CARE_DECLARED' ? '✓' : state === 'CLOSED_WITHOUT_CARE' ? '■' : '●'
   const cls = state === 'CARE_VERIFIED' ? 'done' : state === 'CLOSED_WITHOUT_CARE' ? 'closed' : ''
   return (

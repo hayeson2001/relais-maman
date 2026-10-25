@@ -39,7 +39,7 @@ const UNSAFE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
 
 export async function buildApp(ctx: AppContext, opts: { logStream?: NodeJS.WritableStream } = {}): Promise<FastifyInstance> {
   const app = Fastify({
-    trustProxy: ctx.config.APP_ENV === 'pilot' || ctx.config.APP_ENV === 'production',
+    trustProxy: ['demo', 'pilot', 'production'].includes(ctx.config.APP_ENV),
     logger:
       ctx.config.APP_ENV === 'test'
         ? false

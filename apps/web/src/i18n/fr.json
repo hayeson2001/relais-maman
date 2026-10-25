@@ -82,7 +82,8 @@
     "AWAITING_COMPLETION": "Soin à confirmer",
     "CARE_DECLARED": "Vous avez dit avoir reçu le soin",
     "CARE_VERIFIED": "Soin vérifié",
-    "CLOSED_WITHOUT_CARE": "Clos sans soin confirmé"
+    "CLOSED_WITHOUT_CARE": "Clos sans soin confirmé",
+    "CARE_DECLARED_STAFF": "Soin déclaré par la maman"
   },
   "slotStatus": {
     "PROPOSED": "Proposé",
@@ -245,8 +246,16 @@
     "verify": "Vérification du soin",
     "verifyHelp": "Une vérification d’agent n’est pas une confirmation du centre. Indiquez la source réelle.",
     "method": "Méthode",
-    "methods": { "PHONE_CALL": "Appel", "IN_PERSON": "En personne", "FACILITY_REGISTER": "Registre du centre", "OTHER": "Autre" },
-    "sources": { "FACILITY_CONFIRMATION": "confirmation du centre", "AGENT_VERIFICATION": "vérification par un agent" },
+    "methods": {
+      "PHONE_CALL": "Appel",
+      "IN_PERSON": "En personne",
+      "FACILITY_REGISTER": "Registre du centre",
+      "OTHER": "Autre"
+    },
+    "sources": {
+      "FACILITY_CONFIRMATION": "confirmation du centre",
+      "AGENT_VERIFICATION": "vérification par un agent"
+    },
     "close": "Clôturer sans soin confirmé",
     "closeReasons": {
       "UNREACHABLE": "Injoignable",
@@ -279,7 +288,8 @@
     "activationCode": "Code d’activation",
     "validUntil": "Valable jusqu’au {{date}}",
     "recovery": "Nouveau code d’activation",
-    "recoveryHelp": "Pour une maman bloquée ou qui a oublié son code. Ses anciennes connexions sont coupées."
+    "recoveryHelp": "Pour une maman bloquée ou qui a oublié son code. Ses anciennes connexions sont coupées.",
+    "categorySource": "Origine de la catégorie"
   },
   "facility": {
     "title": "Créneaux et soins de mon centre",
@@ -313,5 +323,12 @@
     "notImplemented": "Non implémenté",
     "createAccount": "Créer un compte",
     "tempPassword": "Mot de passe provisoire (affiché une seule fois)"
+  },
+  "categorySources": {
+    "BENEFICIARY_CHOICE": "Choix de la maman",
+    "MODEL_SUGGESTION": "Suggestion du modèle",
+    "HEALTH_REVIEW_RULE": "Signal santé (reprise humaine)",
+    "AGENT_DECISION": "Décision de l’agent",
+    "NONE": "Non classée"
   }
 }

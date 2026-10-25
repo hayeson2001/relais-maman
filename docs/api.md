@@ -1,7 +1,7 @@
 # API REST
 
 - Documentation interactive (hors production) : `http://127.0.0.1:3000/api/docs`
-- Spécification OpenAPI générée depuis les schémas Zod des routes réelles : [api/openapi.json](api/openapi.json) (53 routes ; régénérer avec `npx tsx scripts/export-openapi.mts`).
+- Spécification OpenAPI générée depuis les schémas Zod des routes réelles : [api/openapi.json](api/openapi.json) (54 routes ; régénérer avec `npx tsx scripts/export-openapi.mts`).
 - Contrats partagés client/serveur : `packages/core/src/schemas.ts`.
 
 ## Conventions

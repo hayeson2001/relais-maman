@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, NavLink } from '../../router.tsx'
 import { useTranslation } from 'react-i18next'
 import { Layout } from '../../components/Layout.tsx'
-import { LoadState, StateBadge, formatDateTime, useLoad } from '../../components/ui.tsx'
+import { LoadState, StateBadge, stateLabel, formatDateTime, useLoad } from '../../components/ui.tsx'
 import { api } from '../../api/client.ts'
 
 export const AgentNav = () => {
@@ -37,7 +37,7 @@ export function Queue() {
         <div><label htmlFor="f-state">{t('agent.state')}</label>
           <select id="f-state" value={f.state} onChange={set('state')}>
             <option value="">{t('agent.all')}</option>
-            {STATES.map((s) => <option key={s} value={s}>{t(`states.${s}`)}</option>)}
+            {STATES.map((s) => <option key={s} value={s}>{stateLabel(t, s, true)}</option>)}
           </select></div>
         <div><label htmlFor="f-assigned">{t('agent.assigned')}</label>
           <select id="f-assigned" value={f.assigned} onChange={set('assigned')}>
@@ -71,7 +71,7 @@ export function Queue() {
                     {r.healthReviewCue && <><br /><span className="badge">⚠ {t('agent.healthCue')}</span></>}
                     {r.hasAudio && <><br /><span className="badge">🎙 {t('agent.audio')}</span></>}
                   </td>
-                  <td><StateBadge state={r.state} viewed={r.viewed} /><br /><span className="small">{r.viewed ? t('agent.viewed') : t('agent.notViewed')}</span></td>
+                  <td><StateBadge staff state={r.state} viewed={r.viewed} /><br /><span className="small">{r.viewed ? t('agent.viewed') : t('agent.notViewed')}</span></td>
                   <td>{formatDateTime(r.createdAt)}</td>
                   <td>{r.assignedTo ?? '—'}</td>
                   <td><Link className="btn secondary" to={`/agent/demande/${r.id}`}>Ouvrir</Link></td>

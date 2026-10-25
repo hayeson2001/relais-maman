@@ -54,7 +54,7 @@ export function FacilityHome() {
       {d?.requests.map((r) => (
         <section className="card" key={r.id}>
           <h2>{r.beneficiary} · {t(`categories.${r.category ?? 'none'}`)}</h2>
-          <p><StateBadge state={r.state} /></p>
+          <p><StateBadge staff state={r.state} /></p>
           {r.slots.map((s) => (
             <p key={s.id} className="row" style={{ alignItems: 'center' }}>
               {formatDateTime(s.startsAt)} — <strong>{t(`slotStatus.${s.status}`)}</strong>

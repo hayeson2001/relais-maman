@@ -1,6 +1,8 @@
 import type { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import type { AppContext } from '../context.ts'
+import { DEMO } from '../demo/seed.ts'
+import { notFound } from '../http/errors.ts'
 
 /** Informations publiques nécessaires avant connexion. Aucune donnée personnelle. */
 export async function publicRoutes(app: FastifyInstance, ctx: AppContext) {
@@ -9,6 +11,25 @@ export async function publicRoutes(app: FastifyInstance, ctx: AppContext) {
   app.get('/api/health', { schema: { tags: ['public'] } }, async () => {
     await db.$queryRaw`SELECT 1`
     return { status: 'ok', env: ctx.config.APP_ENV }
+  })
+
+  /**
+   * Démo publique uniquement : comptes FICTIFS à essayer (déjà publiés dans le dépôt).
+   * L'administration n'y figure pas. Introuvable dans tout autre environnement.
+   */
+  app.get('/api/public/demo-accounts', { schema: { tags: ['public'] } }, async () => {
+    if (ctx.config.APP_ENV !== 'demo') throw notFound()
+    return {
+      resetHour: ctx.config.DEMO_AUTO_RESET ? ctx.config.DEMO_RESET_HOUR : null,
+      accounts: [
+        { space: 'beneficiary', name: 'Ama K.', login: DEMO.ama.identifier, secret: DEMO.ama.pin },
+        { space: 'beneficiary', name: 'Abiba T.', login: DEMO.abiba.identifier, secret: DEMO.abiba.pin },
+        { space: 'staff', name: 'Esi (agent, East team)', login: DEMO.agentEst.loginId, secret: DEMO.agentEst.password },
+        { space: 'staff', name: 'Afi (agent, West team)', login: DEMO.agentOuest.loginId, secret: DEMO.agentOuest.password },
+        { space: 'staff', name: 'Facility A (can confirm care)', login: DEMO.referentA.loginId, secret: DEMO.referentA.password },
+        { space: 'staff', name: 'Facility B (cannot confirm care)', login: DEMO.referentB.loginId, secret: DEMO.referentB.password },
+      ],
+    }
   })
 
   /** Seules les langues réellement disponibles sont proposées aux bénéficiaires. */
